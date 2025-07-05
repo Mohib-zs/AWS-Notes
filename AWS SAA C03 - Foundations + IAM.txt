@@ -1,0 +1,30 @@
+Choosing a region depends on three things
+* Compliance, if a government wants it's data in their own country like France, host your infra and application in France.
+* Proximity, your application should be hosted in a region close to your users. 
+* Availability, not every service is available everywhere. 
+* Pricing, each service is priced differently in different regions.
+
+A region in AWS has min 3 azs and max 6 azs. Each az has multiple data centers. Points of presence are also known as edge locations used by CDNs so content can be delivered faster.
+
+Global services in AWS are IAM, route 53, CloudFront and WAF. Region scoped services are EC2, elastic Beanstalk, Lambda, Rekognition. Checkout region table for more info
+
+IAM policies in json consists of Effect, what would happen (Allow/Deny), Action, on performing what operations (read, write, describe, list) and Resource (ec2, s3) on what resources, could b specific e.g my-s3-bucket. Principal, the IAM user (AWS iam/root), Sid (1), unique identifiers for the statement, Id, identifier for the policy.
+
+Inline policies in IAM are policies assigned to an individual user. If a user belongs to two groups simultaneously, they will get permissions applied on both groups.
+
+IAM - Password Policy, for stronger passwords which is higher security, In AWS a password policy can be to set a minimum password length, require specific character types like uppercase, lowercase letters, numbers and non alphanumeric characters. Allow all IAM users to change their own passwords and Requires users to change their password after some time. Prevent password reuse. Helps against brute force.
+
+MFA options in AWS are Virual MFA using authenticator and Universal 2nd Factor U2F security key which provides support for multiple root and IAM users using a single security key. Hardware key Fob MFA device is also an option. There is one for Gov AWS as well.
+
+Access to AWS is allowed in three methods. AWS management console (protected by password + MFA), AWS Command Line Interface (CLI) and AWS SDK (Boto3 in python and other lang sdks) protected by access keys. Access keys are generated through the console. Access key id is username while secret access key is password. AWS CLI and Sdk (used for scripting) are open source which directly interact with AWS API. The CLI is an alternative to AWS console. There are mobile and IoT device sdks as well. 
+
+IAM roles consist of one or more policies that are assigned to all AWS services (e.g ec2, s3) not physical users to access other services on your behalf. Roles can be applied to services in other AWS accounts to access services in this account, to users federated by external web ID providers to perform actions in this account, users federated by SAML 2.0 and you can create a custom policy.
+
+IAM Security tools include:
+IAM Credentials Report (account-level) to list all account users and the status of their various credentials. Download a .csv file and check the users and their credentials report.
+
+IAM Access Advisor (user-level) to show the service permissions granted to a user when those services were last accessed. This info helps you revise your policies. Go to users and to last access to check which services were accessed and when and which they are allowed to access with what policies and permissions.
+
+IAM Summary:
+Users are mapped to a physical user for AWS console. Groups contain users, Policies are json documents that outline permission for users or groups, Roles are for EC2 instances or AWS services, security is MFA + strong password policy, AWS CLI is to manage services using CLI and AWS SDK is to manage service using a programming language, Access keys are keys to access AWS using CLI or SDK. Credentials report and IAM Accesss advisor are used for Auditing IAM and it's users.
+ 

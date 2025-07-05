@@ -1,0 +1,70 @@
+Vertical scalability is used for non distributed workloads like databases such as RDS & ElastiCache. Horizontal scaling is used for distributed workloads such as static web apps.
+Passive HA means multi-az deployment while Active HA means horizontal scaling. Active HA consists of Auto Scaling groups with LB while Passive HA requires Auto Scaling group for multi az and Load Balancer multi az.
+
+LoadBalancer is used for spreading load across instances, expose a single point of access (DNS) to your app, handle instance failures, health checks on instances, provide HTTPS for your site, enforce stickiness with cookies, HA in multi AZ, Separate public from private traffic.
+
+AWS has ALB that supports HTTP(S), WebSocket, operates at layer 7 and NLB that supports TCP, TLS, UDP and operates at layer 4 and a Gateway LB that supports IP Protocol operating at layer 3.
+
+ALB can load balance multiple HTTP applications across machines (target groups) as well as load balancing to multiple apps on the same machine (containers), supports redirectS from HTTP to HTTPS. Provides routing for all types of pre and post fixes like headers, query, string etc. e.g is one.example.com/users?id=xxx&1=false. Great for microservices and containers (Docker, ECS). Port mapping allows to redirect to dynamic port to ECS. ALB target groups are EC2, ECS, Lambda, IP addresses (private), IT CANNOT BE A NLB. ALB gives you a fixed hostname, App servers don't see the IP of the client directly, True IP of the client is in the header X-Forwarded-For, for port it is X-Forwarded-Port. For the protocol originally used by the client e.g HTTP, HTTPS its X-Forwarded-Proto
+
+ALB can be internal or internet facing. Best practice is to create a ALB sg and allow traffic from there, in the EC2 sg, only allow traffic transmission on ALB sg and restrict direct inbound access on instances on HTTP(S).
+
+E.g workflow:
+User sends requests to the ALB (e.g https://facebook.com/login), Listener on port 443 receives it. Listener rule matches path=/login, Action: Forward to Target group A, Target group A has two healthy EC2 instances, One instance receives the request and handles it.
+
+Listener rules allow you to add conditional forwarding for e.g if request comes on x.com/settings then actions can be like forward to target groups, redirect to urls or return of a fixed response like error 404 with a custom response body with a specific message like "custom error for code 404". Set priorities of rules to implement which one is applied first on a request.
+
+NLB handling at layer 4 (TCP/UDP), can handle millions of requests per second, it's ultra low latency and has extreme performance for TCP, UDP type traffic. NLB has one static IP per az and supports assignment of elastic IP (Not in free tier). Target groups can be Lambda functions, ALB, EC2 instances as well as Private IP addresses of the EC2 Instance or the on-prem server(hardcoded in NLB) both ec2 and on prem being attached to the same NLB. Attach a NLB on top of a ALB as NLB provides us a fixed IP address while ALB will provide us smart HTTP(S) routing. NLB can perform health checks based on TCP and HTTP(S) protocols.
+
+NLB in each az will be in a subnet with a IPv4 (assigned by AWS or your elastic IP) and a sg which is recommended. EC2 inbound rules edited to allow Http traffic from NLB and ALB.
+
+Gateway Loadbalancer (GLB) operates at layer 3 of the OSI model (IP packet routing) and is used to deploy and manage a fleet of 3rd party network virtual appliances in AWS (Firewall, Intrusion detection/prevention systems, deep packet inspection systems etc.) Please check image on WhatsApp (Me) for further clarification.
+
+What it does is basically you setup gateway load balancer and configure route tables to analyse the traffic that is coming inbound before it hits your application, it goes through the GLB and then to a set of 3rd party virtual security appliances in a target group set for your GLB(Firewall, Intrusion detection/prevention systems, deep packet inspection systems etc.). This will ensure if the traffic is safe it will go through and if not then it will be dropped (denied entry). GLB is on top of ALB, meaning GLB will analyse the traffic, and if it's okay then ALB will forward it to the application. GLB combines two functions, the transparent network gateway, meaning it provides a single entry/exit for all traffic, while the Loadbalancer distributes traffic to your virtual appliances in your target group. If in exam it says to use the GENEVE protocol on port 6081, then this means the GLB. Target groups can be EC2 instances or IP addresses (private) for both on-prem and EC2 instances.
+
+Sticky sessions also known as session affinity, they are used to apply stickiness so that the same client is always redirected ti to the same instance behind a loadbalancer. This works for ALB (with cookies) and NLB (without cookies). Cookie is sent as part of the request from the client to the Loadbalancer. It is basically a tracker with an expiration date, once it expires then the client may be redirected to another instance. Use case is to persist users session data which can save important info like login details. Enabling stickiness however may bring imbalance to the load on the instances. Types of cookies:
+Application-based Cookies:
+  Custom cookie:
+Generated by the target
+Can include any custom attributes required by the application 
+Cookie name must be specified for each target group.
+Don't use AWSALB, AWSALBAPP, or AWSALBTG (reserved for use by the ELB)
+Application cookie:
+Generated by the Loadbalancer 
+Cookie name is AWSALBAPP
+Duration-based Cookies:
+Cookie generated by the Loadbalancer 
+Cookie name is AWSALB for ALB
+
+Cross-zone loadbalancing allows you to distribute load to target groups in multiple azs equally, so if client send 50% data to az1 and 50% to az2, with az1 having 2 instances in TG and az2 having 8 instances in TG. The load divide across them will be 10%, meaning equal load distribution across all 10 instances in the azs. You can disable this feature so load is then divided individually in each az without cross zone distribution. This can bring load to one az if there are less instances in it than the other one. In ALB this is enabled by default (free of cost), however in NLB and GLB, this is disabled by default and you pay charges for enabling it. You can disable cross-zone loadbalancing at the target group level as well (stickiness is disabled if cross-zone disabled). Please check WhatsApp (Me) for further clarification.
+
+SSL(Secure Socket Layer) certificates used for encryption of traffic between your clients and your loadbalancer. TLS (Transport Layer Security) certificates are used for encrypted in-transit data transfer. SSL isn't used mainly today, instead it is TLS that is mostly used but still refered to as SSL. Public SSL certificates are issued by Certificate Authorities (CA). Like GoDaddy, DigiCert etc. SSL Certificates have an expiration date.
+
+Users communicate with the Loadbalancer over HTTPS, then the Loadbalancer communicates internally to EC2 via HTTP over Private VPC which is secure. The Loadbalancer uses an X.509 certificate (SSL/TLS server certificate). You can manage these certificates using ACM (AWS Certificate Manager) or in IAM (not recommended) or imported externally to the ACM in the ALB listener settings (requires Certificate private key, Certificate body and optionally, certificate chain). Finally forward it to the target group of your choice.
+For HTTPS listener:
+You must specify a default certificate 
+You can add an optional list of certs to support multiple domains
+Clients can use SNI (Server Name Indication) to specify the hostname they reach.
+Ability to specify a security policy to support older versions of SSL/TLS (legacy clients)
+
+SNI (Server Name Indication) solves the problem of loading multiple TLS Certificates onto one web server (to server multiple websites). It requires the client to indicate the hostname of the target server in the intial TLS handshake. For e.g if client accesses mycorp.com and the loaded certs are mycorp.com and sun.com, The ALB will fetch the correct certificate (mycorp.com) and forward the request to the correct target group(for mycorp.com). Works with ALB, NLB, CloudFront. Both ALB&NLB supports multiple listeners with multiple SSL certificates and use SNI to make it work.
+
+De-registration delay (ex connection draining) is the time to complete in-flight (active) requests running on the instance which is de-registering (removed, marker unhealthy) from the target group. No new request is sent by the ELB when the instance is de-registering, active requests session period time (before all connections are closed) can be set between 1 to 3600 seconds (300s default). Can be disabled but that could make users loss session data, too long would mean instance remains there longer.
+
+Auto scaling group with an ELB is a great combination as the ELB can perform health checks on your EC2 instances and if deemed unhealthy, they will be terminated and new ones are created, also if an ASG scales out, ELB will automatically send traffic to new instances.
+
+You use a Launch Template, which consists of the instance AMI, instance type, user data, EBS, SG, SSH Key pair, IAM Role for your EC2 Instances, Network+Subnet info, ELB info etc.
+
+Scaling policies include:
+Dynamic scaling: Simple to setup, Average ASG CPU to stay at 40%
+Simple/Step Scaling: When a CloudWatch alarm is triggered (example CPU > 70%) then add 2 units. If cloudwatch alarm triggered (example CPU < 30%), then remove 1.
+Scheduled Scaling: Anticipate a scaling based on known usage patterns. E.g increase the min capacity to 10 at 5 pm on Fridays.
+Predictive scaling: continuously forecast load and schedule scaling ahead. E.g analyze historical load, generate a forecast, schedule based on that forecast.
+
+Good metrics to scale on include, following are the target tracking scaling policy metric types:
+CPU utilization across instances. RequestCountPerTarget means the number of request an instance in TG is handling being served by ALB e.g 3 requests per target (instance). This comes under target tracking policy.
+Average network In/Out (Bytes), meaning if there is alot of download/upload on your instances and want that to be stable, scale based on the network threshold.
+Custom metric that you push using CloudWatch.
+
+Average cooldown period after each scaling activity is 300 seconds, during this the ASG will not launch or terminate additional instances (so metrics can stabilise).
+Good practice is to use a ready-to-use AMI to reduce config times to serve requests faster.

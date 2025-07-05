@@ -1,0 +1,52 @@
+An EBS Volume is a network drive which you attach to instances. They can be mounted to only one instance at a time while some EBS volumes support multi-attach. Bound to a specific AZ. It's like attaching a USB stick (not physically) via network. It uses network to communicate to instance so there might be latency.
+
+You can choose whether EBS volumes should be deleted on termination of instance attached or not, IOPS a input/output operations per second while throughput is data transfer speed.
+E.g if IOPS are 1000 and I/O is 4KB.
+IOPS = 1000
+Throughput = 1000 * 4 = 4000KB/s = 4MB/s
+
+EBS snapshots for backup of volumes. Not necessary to detach volume to do snapshot, but recommended. Copy snapshots across AZ or region.
+
+Features are EBS snapshot archive, moving snapshot to archive tier, 75% cheaper but takes 24 to 72 hours to restore. Recycle bin for EBS snapshots to retain deleted snapshots, retention period from 1 day to 1 year.
+
+Full Snapshot Restore (FSR)
+Force full initialization of snapshot to have no latency on first use. But quite expensive.
+
+Copy EBS volumes from one az to another using snapshot, take snapshot of EBS in us 1 a and create volume using it in us 1 b.
+
+AMI also know as Amazon Machine Image is a cutomization of an EC2 instance, you add your own software, configuration, OS, monitoring etc.
+Faster boot / configuration time because all your software is pre-packaged. AMIs are for specific regions but can be copied across regions. You can launch EC2 instances from a public AMI by AWS, your own AMI which you make and maintain and use/buy from AWS marketplace (AMI made by someone else) 
+
+AMI process starts by starting and EC2 instance and customizing it, stop the instance for data integrity, build an image (AMI) of the instance, which will also create EBS snapshots. Launch instance from that AMI in same or different AZ
+
+Launching instances with a pre-configured AMI is much faster in initial boot ups as compared to creating an instance fresh and then installing everything manually using a User Data script.
+
+EBS has good but limited performance since its network dependent. EC2 instance store is a hard disk attached to instance which has higher performance. It has better I/O performance, but it's loses it's storage if they're stopped(moved to another instance) or terminated, good for buffer/cache/scratch data/temporary content. Risk of data loss due to hardware failure and backups and replications is our responsibility.
+
+EBS has 6 volume types:
+gp2/gp3 (SSD): General purpose SSD with balanced price and performance. Used for system boot volumes, virtual desktop, dev/test environments. Range from 1 GiB to 16 TiB.
+No need to understand metrics, just have high level knowledge of this.
+ 
+Difference in two is that in gp3 and io1 size and throughput are adjusted independently where in gp2 size and throughput are linked.
+
+io1/io2 Block Express (SSD): Highest performance SSD volume with extremely low latency for mission critical workloads. Also great for database workloads like OLTP. 
+io1 ranges from 4GiB to 16TiB, Max PIOPS for nitro instances are 64000 while 32000 for other. Can increase PIOPS independent from size.
+io2 faster than io1.
+io2 Block Express ranges from 4GiB to 64TiB, has sub-millisecond latency, MAX PIOPS 256000 with IOPS:GiB ratio of 1000:1. io1/io2 Supports multi-attach in which one volume can be attached to multiple instances. Anything over this like 300,000 IOPS means instance store level work.
+
+st1 (HDD): Low cost HDD for frequently accessed data, throughput extensive workloads. Used in Big Data, Data Warehouses, Log Processing. Max throughput and IOPS are 500.
+sc1 (HDD): Lowest cost HDD volume designed for less frequently accessed workloads. Used in scenarios where lowest cost required. Max throughput and IOPS are 250
+
+Only SSD (gp2/gp3, io1/io2) can be used as boot volumes
+
+Multi-attach allows EBS volume to be attached to multiple instances where multiple instances can perform read/write operations on it at the same time. Multi-attach is specific to an az and is used to achieve high application availability in clustered linux applications, applications must manage concurrent write operations. It supports upto 16 instances at a time. Use a filesystem that's cluster aware not XFS or ext4.
+
+Encryption in EBS means, data encryption at rest, data encryption in flight (transfer between instance and volume), snapshot encryption, all volumes created from that snapshot are encrypted. Encryption and decryption are separate and handled transparently, Encryption has minimal impact on latency, uses KMS keys for encryption AES-256, Copying an unencrypted snapshot allows encryption. Encrypt an unencrypted volume by creating volume snapshot (unencrypted), then copying the snapshot to create another snapshot, enable encryption in copy process and choose the KMS key, create the encrypted snapshot, then create the volume from that snapshot. 
+
+EFS (Elastic File System) is AWS managed Network File System (NFS), which can be attached to multiple instances across multiple AZs at the same time or be available for one az only based on choice. Highly available, scalable, expensive. Used for content management, web serving, data sharing, Wordpress. Uses sg to control access to EFS, Uses NFSv4.1 protocol, compatible eith Linux AMI only, Encryption at rest using KMS. Uses POSIX (Linux) file system, file system scales automatically, pay-per-use per GB, no capacity planning. EFS scales upto 1000 concurrent usere, with 10+GB/s throughput, grows to petabyte scale network file system automatically.
+
+It can be regional or zonal, has automatic backups, lifecycle management in form of tiers between standard, IA and archived. Encryption at rest, throughput mode can enhanced or bursting, enhanced being high by default while bursting is great at scaling for unpredictable workloads. Elastic is also used for EFS scale while Provisioned mode only provides workload provisioned such as MiB/s (min-max). You can set performance mode to general or Max I/O. Also implement policies like prevent root access by default, enforce read-only access by default, prevent anonymous access, enforce in-transit encryption for all clients.
+
+EFS storage tiers are Standard for frequent access, Infrequent access, Archive. Implement lifecycle policues to move files between storage tiers such as standard to infrequent to archive based on rate of access, can go back to standard on first access on IA or archive if chosen. Standard is multi-az for prod, for dev/test use one az as well with backup enabled and compatible with IA. 90% cost savings.
+
+EFS is used to sharing website files, and is more expensive than EBS.

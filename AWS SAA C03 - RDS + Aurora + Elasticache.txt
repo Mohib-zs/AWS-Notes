@@ -1,0 +1,28 @@
+RDS is AWS managed DB service which uses SQL as a query language. Types of databases provided are:
+- Postgres
+- MySQL
+- MariaDB
+- Oracle
+- Microsoft SQL Server 
+- IBM DB2
+- Aurora (AWS Proprietary database)
+
+Advantages of using RDS versus deploying DB on EC2 is that RDS has automated provisioning and OS patching, continuous backups and restore to a specific timestamp (Point in time restore), Monitoring dashboards, Read replicas for improved read performance, Multi az setup for DR, Maintenance windows for upgrades, scalability (vertical & horizontal), EBS backed storage. 
+Disadvantage is that you can SSH or access the underlying EC2 instance in which the database is running.
+RDS auto scaling helps you increase storage on your RDS DB instance dynamically, meaning it will automatically scale out if the DB is low on storage without stopping. You avoid manually scaling the DB. You have to set the maximum storage threshold, for e.g Automatically modify if free storage is less than 10% of allocated storage, Low storage lasts atleast 5 minutes, 6 hours have passed since last modification. Useful for applications with unpredictable workloads and supports all RDS engines.
+
+An RDS DB instance can have upto 15 read replicas within an AZ, Cross AZ or Cross Region. Replication is ASYNCHRONOUS so reads are eventually consistent but not immediate between the database instances, Replicas can be promoted to their own DB, Applications must update the connection string to leverage read replicas.
+
+RDS read replica Use case is that lets say we have a prod database that is taking on load, we want to run a reporting app for some analytics, rather than attaching the prod database to the new reporting app you attach a read replica database of the prod database and attach it to the reporting app. This is because attaching prod database to both would overload prod database, so attaching read replica would allow both to run without issues. Just know that you can only run SELECT (=read) queires (SQL queries which are for reading not INSERT, UPDATE or DELETE) on read replicas.
+
+There is usually network cost in AWS when data goes from one AZ to another. But there are exceptions sometimes for managed services including RDS. For RDS read replicas within same region, different az, we dont pay fees for replication, but cross region replication for RDS incurs fees.
+
+For disaster recovery (DR) you can have a master database instance in az1 and a standby instance at az2, there are no read and writes at standby, only data from master is SYNCHRONOUSLY replicated to standby so incase master fails, standby is there to takeover as master. Read replicas can also be used as standby instance for DR. Converting RDS from single to multi az requires zero downtime. Just click on modify and choose multi-az. What would happen internally is that a snapshot of the main RDS would be taken and a read replica of it would be created in a different az, and then SYNC replication would be established between the two, with the standby eventually catching up to main.
+
+
+
+
+
+
+
+
