@@ -75,3 +75,11 @@ Session store: store temporary session data in cache (using TTL features)
 Redis Use Case:
 
 Gaming leaderboards are computationally complex, redis sorted sets gurantee both uniqueness and element ordering, each time a new element added, its ranked in real time, then in correct order.
+
+Points to be noted:
+
+Aurora cloning is faster option for database replication
+Only PostgreSQL and MySQL supports IAM database authentication
+RDS Multi-az feature does not require you to change SQL connection string
+Enhance security of Elasticache redis cluster by allowing users to access Elasticache cluster using IAM identities using IAM Authentication
+Read Replica uses Asynchronous Replication and Multi-AZ uses Synchronous Replication
