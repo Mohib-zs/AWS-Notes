@@ -43,6 +43,35 @@ RDS backups are of two types, one is the automated backups where there is a full
 
 Trick: In a Stopped RDS database you will still pay for storage, if you plan on stopping it for a long time, you should snapshot and restore instead.
 
+Restore your RDS DB using backup or snapshot to a new database, you can also take a snapshot of your on-prem RDS database, upload and store the snapshot to S3 and then restore a MySQL RDS database on AWS, for a Aurora MySQL DB Cluster, you would follow the same steps except the backup of your on-prem RDS DB would be taken using Percona XtraBackup.
+
+Cloning a Aurora Database is faster than snapshot & restore, It uses copy on write protocol in which the new DB cluster follows the same data volume as the original DB cluster and additional storage is added once new data is added and data is copied to be separated. Very fast, cost effective and can be used to create staging DB from Production DB without effecting PRod DB.
+
+RDS encryption at rest uses AWS KMS (must be defined at launch time), if master unencrypted, so are the replicas, to encrypt an unencrypted RDS DB, restore snapshot with encryption enabled. Encryption at flight (RDS/Aurora) uses AWS-TLS by default, clients must have AWS TLS Root certificates provided on AWS website. Recommended Authentication method is IAM roles instead of user:pass. Uses sg to manage traffic in/out (bound) to your DB. No SSH except for RDS custom and audit logs may be sent to CloudWatch logs for longer retention. 
+
+RDS proxy allows app to share and pool DB connections, improving efficiency, reducing resource consumption of DB (CPU, RAM), and minimize open connections and timeouts, RDS Proxy is serverless, auto-scaling and highly available (multi-az), reduces RDS & Aurora failover time by 66%, Supports RDS (MySQL, PostgreSQL, MariaDB, MS SQL server) and Aurora (MySQL, PostgreSQL), no code changes required for most apps, just connect to RDS Proxy. Enforce IAM Authenticaton for DB and save credentials in AWS Secrets Manager. RDS Proxy is never publically accessible (must be accessed from VPC).
+
+Lambda functions may be used from the VPC outside the private DB subnet, hundreds of functions will appear and throw connection request to RDS Proxy, overloading it. Then the proxy would pool the requests and make minimal request to the DB instance to fulfill requirements, putting less load on the DB instance and lesser connection requests.
 
 
+Amazon ElastiCache is managed Cache similar to RDS, Services are managed Redis or Memcached. Caches are in-memory databases with extreme performance, low latency. Reduces load from DB for read intensive workloads and make the app statless since the state is stored in the cache. AWS take care of maintainence, patching similar to RDS. Using Elasticache however requires heavy app code changes unlike RDS Proxy to query the cache before or after you query the DB.
 
+App queries elasticache, if data is available then it is a cache hit otherwise cache miss and data is read from DB and then written to cache, used to relieve load in RDS, invalidation strategy is used to ensure only the most current data is used in there. One example of it is user sessions to make the app stateless, the first login into the app writes data to Elasticache, then second/third time, login isn't required since data gets retrieved from cache.
+
+Redis is HA with multi-az and autofailover, read replicas to scale reads, data is durable  using AOF persistance, backup and restore features, supports sets and sorted sets great for leaderboards and sorting data in app. 
+
+Memcached is multi-node for partionting of data (sharding), no HA (replication), non-persistent, backup and restore (only for serverless version) and multi-threaded architecture for good performance.
+
+Elasticache can run as serverless or self-designed, created from backup or as cluster, enabling cluster will use replication of data across multiple shards (node groups), while disabled will have a single shard (node group) with 1 master and upto 5 read replicas. Can be setup on AWS cloud and on-prem using AWS Outposts by creating a subnet ID in outposts. Check multi-az and failover if required. Choose version, port, instance family (node type) number of replicas, VPC/subnet, enable/disable encryption at rest and in-flight (in-flight requires redis AUTH token or User group Access control list), security groups.
+
+Elasicache supports IAM authentication for Redis, IAM policies in Elasticache are only used for AWS API-level security, Redis AUTH allows you to set password/token when you create a cluster for extra security on top of sgs, supports SSL in-flight, Memcached supports SASL-based authentication (advanced).
+
+Patterns for Elasticache:
+
+Lazy loading: all the read data is cached, data can become stale in cache
+Write through: Adds or update data in the cache when written to a DB (no stale)
+Session store: store temporary session data in cache (using TTL features)
+
+Redis Use Case:
+
+Gaming leaderboards are computationally complex, redis sorted sets gurantee both uniqueness and element ordering, each time a new element added, its ranked in real time, then in correct order.
