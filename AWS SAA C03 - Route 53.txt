@@ -1,0 +1,15 @@
+Domain Registrar's are Amazon Route 53, GoDaddy etc.
+DNS Records: A, AAAA, CNAME, NS,.. (must knows)
+Zone File: Contains DNS Records
+Name Server: Resolves DNS queries (Authoritative or Non-Authoritative)
+Top Level Domain (TLD):.com, .us, .in, .gov, .org, ...
+Second Level Domain (SLD): amazon.com, google.com,..
+
+in http://api.www.example.com. 	
+. in the end is root, .com is TLD, .example.com is SLD, .www.example.com. is sub-domain and api.www.example.com is the URL and http:// is the protocol.
+
+TTL (Time To Live) is the amount of time the record is cached at DNS Resolvers. Routing policy is how Route 53 responds to queries. A record maps hostname to IPv4, AAAA maps hostname to IPv6, CNAME maps a hostname to another hostname, where target is a domain name with A or AAAA record. Can't create a CNAME record for the top node of a DNS namespace (zone apex) example you can't create for example.com but can create for www.example.com, NS (Name Server) for the hosted zone controls how traffic is routed for a domain.
+
+Hosted Zones is a container for records that define how to route traffic to domains and their subdomains, pulic-hosted zones cotain records of how you route traffic to public domains while private-hosted zones contain records that specify how you route traffic to private domains defined in one or more VPCs or internal networks. You pay $0.50 per month per hosted zone you create in Amazon Route 53 and $12 per year for each domain you register in it. Enable auto-renew to auto-renew domain after 1 year if required. 
+
+High TTL e.g 24 HR means less traffic on route 53 but clients will possibly have outdated records and will have to wait 24HR to get new record change, Low TTL e.g 60 sec means more traffic on Route 53 and more kharcha ($$) but records are outdated for less time means if you make A record change, client can access the new record after 60 seconds, easy to change records. Except for Alias records, TTL is mandatory for each DNS record. 
