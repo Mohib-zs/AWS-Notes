@@ -1,4 +1,4 @@
-Domain Registrar's are Amazon Route 53, GoDaddy etc.
+aaDomain Registrar's are Amazon Route 53, GoDaddy etc.
 DNS Records: A, AAAA, CNAME, NS,.. (must knows)
 Zone File: Contains DNS Records
 Name Server: Resolves DNS queries (Authoritative or Non-Authoritative)
@@ -32,6 +32,7 @@ Routing policies define how Route 53 responds to DNS queries, it's not the same 
 
 Simple routing policy routes to a single resource, though you can specify multiple values in the same record, if multiple values are returned, a random value would be chosen by client, only one AWS resource can be specified when AWS resource is enabled though it can't be associated with health checks.
 
+Weighted routing policy uses weights to control the % of requests that go to each specific resource. Assign each record a relative weight, doesnt need to sum up to 100. DNS records must have the same name and type, can be associated with health checks. Use cases: load balancing between regions, testing new application versions, assign a weight of record 0 to stop sending traffic to a resource and if all records have 0 then all will be returned equally. weight value can be between 0 and 255.
 
 
  
