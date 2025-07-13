@@ -1,4 +1,4 @@
-aaDomain Registrar's are Amazon Route 53, GoDaddy etc.
+Domain Registrar's are Amazon Route 53, GoDaddy etc.
 DNS Records: A, AAAA, CNAME, NS,.. (must knows)
 Zone File: Contains DNS Records
 Name Server: Resolves DNS queries (Authoritative or Non-Authoritative)
@@ -45,3 +45,13 @@ Calculated health checks combines the results of multiple health checks into a s
 Route 53 health checkers are outside the VPC and can't access private endpoints of VPC or on-prem resources. To perform health check on private resource simply setup cloudwatch metric on private resource and associate it with a cloudwatch alarm then create a health check that checks the alarm itself.
 
 Failover routing policy is a active-passive policy in which Route 53 has two or more records (or instances) with health checks enabled (mandatory for primary) One is called primary and other secondary - DR. When request is made to route 53, request is forwarded to primary record and if health check of primary is unhealthy then request is automatically forwarded to secondary hence performing an automated failover.
+
+Geolocation routing policy is based on user location and is different from latency based routing. It routes on specific location by continent, country or by US State (if there's overlapping, most precise location is selected). Create a default record in case there's no match on location. Use cases: website localization like record of location france will provide french version of app to users routing from france, same with germany for german, and a default english version for the rest of the world. Its also used for content distribution and load balancing and can be associated with Health Checks.
+
+Geoproximity routing policy allows you to route traffic to your resources based on the geographic location of users and resources. It provides the ability to shift more traffic to specific resources using a defined bias value. To expand value - (1 to 99) and to shrink value (-1 to -99). The geoproximity bias is really helpful when you need to shift traffic from one region to another, by increasing the bias. Resources can be AWS resources (specify AWS region) and Non-AWS resources (specify Latitude and Longitude).You must use Route 53 Traffic Flow (advanced) to use this feature.
+
+IP-based routing policy is based on client's ip addresses. Provide a list of CIDRs for your clients and the corresponding endpoints/locations (user-IP-to-endpoint mappings). Usecases: Optimize performance, reduce network costs.. e/g is to route endusers from a particular ISP to a specifi endpoint.
+
+Multi-value routing policy is quite similar to simple routing policy which also takes multiple Ipv4 values as input but multi-value creates a separate record for each value and also allows health-checks.
+
+Domain registrar is where you buy or register your domain name by paying annual charges e.g GoDaddy and Amazon Registrar Inc. Usually they also provide you with DNS service but you can use a different DNS service to manage your DNS records e.g Amazon Route 53. For e.g GoDaddy provides you DNS service for your record or Domain by providing you with name servers. To use Route 53 as DNS service, simply create a hosted zone in Route 53, this will provide you with its own name servers with their urls. Change the name server for the record in GoDaddy by assigning route 53 name server URLS and your domain will now be managed by Route 53.
