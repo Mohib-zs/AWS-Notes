@@ -1,0 +1,59 @@
+Amazon S3 is a core part of Amazon, It is used for hosting of websites as well as an integration to other AWS services and is commercialized as infinitely scaling storage. Amazon S3 Usecases are Backup and storage, DR, Archive, Hybrid Cloud storage, Application hosting, Media hosting, Data lakes & big data analytics, software delivery and static website. S3 allows people to store objects (files) in buckets (directories). Buckets must have a globally unique name (across all regions all accounts), they are defined at the region level. S3 looks like a global service but buckets are created in a region. Naming convention is No uppercase, No underscore, 3-63 characters long, Not an IP, Must start with lowercase letter or number, Must no start with prefix xn-- and must not end with the suffix -s3alias.
+
+Objects (files) have a Key which is the FULL path: "s3://my-bucket/my_file.txt" or if the object is nested in folders then "s3://my-bucket/my_folder1/another_folder/my_file.txt". There's no concept of "directories" within buckets (although the UI will trick you otherwise) they're just keys with very long names and contain slashes (/). Object values are content of the body, max object size is 5TB and if uploading a file > 5GB, then use "multi-part upload", like for 5TB, you upload 1000 separate parts of 5GB of the file. Metadata (list of text key/value pairs - system or user metadata) Tags (Unicode key/value pair - up to 10) - useful for security / lifecycle, version ID (if versioning is enabled).
+
+You can choose to enable or disable ACLs for security as well as block public access or not, for encryption you use server-side encryption with amazon s3 managed keys (SSE-S3) or with AWS KMS keys (SSE-KMS) or Dual-layer server-side encryption with AWS Key Management Service keys (DSSE-KMS). Pre-signed URL is a public URL with the owner's or admin users credentials, token attached with the public URL for access to a object which has public access blocked.
+
+Amazon S3 security is either user-based with IAM Policies - which API calls should be allowed for a specific user from IAM or resource based using bucket policies (most common) which provide bucket wide rules from the s3 console for cross account access. Object ACL provide finer grain security along with Bucket ACL (less common), both can be disabled. IAM principal can access an S3 object if the user IAM permissions ALLOW it OR the resource policy ALLOWS it AND theres no explicit DENY. Encrypt objects in Amazon S3 using encryption keys. Bucket policy is a JSON based policy with buckets and objects as resources, effect allow/deny, actions to set API to allow or deny, Principal is the accounts or users to apply policy to (* means all), Use S3 bucket for policy to grant public access to bucket, Force objects to be encrypted at upload or grant access to another account (cross account).
+
+In summary, use bucket policies (assigned to bucket) if you want anonymous internet users to access your bucket , Use IAM policies (assigned to users) when you want users in your AWS account to access your bucket and use IAM roles (assigned to resources) if you want an AWS resource (like EC2) to access your bucket. For cross account access, use bucket policy which allows cross account access for that specific IAM user and the user will be able to make API calls to the bucket. Use policy generator if you have difficulty writing the JSON policy yourself.
+
+For static hosting on S3, enable it from the S3 bucket settings, you would have to provide a index.html file to represent the home page. URL of the website looks like <<bucket-name.s3-website-region.amazonaws.com>> or <<bucket-name.s3-website.region.amazonaws.com>>
+
+Versioning your files on S3 is done at the bucket level, same key overwrite will change the version 1,2,3 and its best practice to version your buckets to protect against unintended deletes (ability to restore a version) and easy rollback to previous version. Also any file that is not versioned prior to version enablement will have version null and suspending versioning will not delete the previous versions.
+
+Deleting an object with versioning enabled/disabled will have two scenarios:
+
+If versioning is disabled and you delete an object, the object is permanently deleted.
+
+If versioning is enabled and you delete an object, a delete marker is added. The original object (including the null version, if it exists) is not deleted — it’s just hidden which can be restored if you delete the permanent marker. For permanent delete, you must specify the version id as well of the object.
+
+Replication in S3 can be CRR (Cross Region Replication) and SRR (Same Region Replication). You must enable versioning in source and destination buckets, Buckets can be in different AWS accounts and the copying is asynchronous though you must give proper IAM permissions to S3. CRR is used when requirements are compliance, lower latency, and replication across accounts. SRR is for log aggregation, live replication between production and test accounts. Only new objects are replicated but optionally, you can replicate existing objects or objects that failed replication using S3 Batch Replication. You can replicate delete markers from source to destination (optional setting) but not deletions with a version ID. No chaining of replication meaning if bucket 1 replicates to bucket 2 and 2 has to 3, contents of 1 wont get replicated to 3.
+
+S3 promises 99.99999999999% durability and 99.5 -  99.99% availabilty and has many storage classes, they are defined below:
+
+S3 Standard - General Purpose:
+99.99 % Availability, Used for frequently accessed data, Low latency and high throughput, Sustain 2 concurrent facility failures. Usecases are Big data analytics, mobile & gaming apps, content distribution..
+
+S3 - Infrequent Access
+For data that is less frequently accessed, but requires rapid access when needed, has lower cost than S3 standard, two tiers of S3 - Infrequent access
+ 
+S3 Standard - Infrequent Access (S3 Standard-IA)
+99.9% Availability
+Use cases: Disaster Recovery, backups
+
+S3 One Zone-Infrequent Access (S3 One Zone-IA)
+High Durability in a single az; data lost when AZ is destroyed, 99.5% Availability, Usecases are storing secondary backup copies of on-premise data, or data you can recreate.
+
+S3 Glacier Storage Classes
+Low-cost object storage meant for archiving/backup, pricing is storage+object retrieval cost, three tiers of it:
+
+S3 Glacier Instant Retrieval:
+Millisecond retrieval, great for data accessed once a quarter and minimum storage duration is 90 days
+
+S3 Glacier Flexible Retrieval
+Expedited (1 to 5 minutes), Standard (3 to 5 hours), Bulk (5 to 12 hours - free) and minimum storage duration is 90 days.
+
+S3 Glacier Deep Archive - for long term storage:
+Standard (12 hours), Bulk (48 hours) and minimum storage duration of 180 days. 
+
+S3 Intelligent-Tiering
+Small monthly monitoring and auto-tiering fee, Move objects automatically between access tiers based on usage, there are no retrieval charges in S3 Intelligent-Tiering
+
+Frequent Access tier (automatic): default tier
+Infrequent Access tier (automatic): objects not accessed for 30 days
+Archive Instant Access tier (automatic): objects not accessed for 90 days
+Archive Access tier (optional): configurable from 90 days to 700+ days
+Deep Archive Access tier (optional): configurable from 180 days to 700+ days
+
+You can make custom storage tier transition rules for objects by creating lifecycle rules.
