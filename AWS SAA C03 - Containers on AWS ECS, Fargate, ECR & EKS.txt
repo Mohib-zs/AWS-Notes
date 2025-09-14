@@ -1,0 +1,15 @@
+ECS (Elastic Container Service) is used to launch Docker containers on AWS (aka Launch ECS tasks on ECS Clusters).
+
+For launch type, if you use EC2 launch, then you must provision and maintain the infra (ec2 instances) yourself. Each Ec2 instance must run the ECS agent to register in the ECS cluster. AWS takes care of starting/stopping containers.
+
+For launch type, if you use Fargate launch, then you do not provision the infra (no EC2 instances to manage), Its all serverless. You just create task definitions, AWS then just runs the ECS tasks for you based on the required CPU/RAM. To scale, just increase the number of tasks, you can see the containers but not an instance where the container may be located in. There is also Fargate spot launch option which allows you to launch serverless spot instances in ECS cluster.
+
+IAM Role for ECS is EC2 Instance profile role (EC2 launch type only): Its used by the ECS agent, makes API calls to ECS service, send container logs to CloudWatch Logs, Pull Docker image from ECR, Reference sensitive data in secrets manager or SSM Parameter store. ECS task role allows each task to have a specific role (e.g make api calls to S3 or Dynamo DB), use different role for the different ECS services you run, task role is defined in the task definition.
+
+Amazon ECS (both EC2 and Fargate launch types) can integrated with ELB. Like Most ECS tasks can be fronted over an ALB with HTTP(S) endpoints for the users to access them via the ALB (works for most cases). Can use NLB but usually for high throughput/performance use cases or pair it with AWS Private Link.
+
+ECS - Data Volumes: You can mount EFS file systems onto ECS tasks, works both for EC2 and Fargate launch types. Tasks running in any az will share the same data in the EFS file system. Ultimate Serverless combo is to use Fargate + EFS = Fully serverless. Usecases are persistent multi-az shared storage for your containers. Amazon S3 cannot be mounted as a file system.
+
+ECS service auto scaling automatically increases/decreases the desired number of ECS tasks, Amazon ECS Auto Scaling uses AWS Application Auto Scaling, scaling metrics are ECS service average CPU utilization, average memory utilization or ALB Request count per target. You can use Target tracking to scale based on target value for a specific cloudwatch metric, step scaling to scale based on a specified cloudwatch alarm, scheduled scaling to scale based on a specified date/time (predictable changes). ECS Service Auto Scaling (task level) is not equal to EC2 Auto scaling (EC2 instance level). Fargate Auto Scaling is much easier to setup (because serverless)
+
+ECS service scaling is done by adding underlying EC2 instances, two ways of doing it. Using Auto Scaling Group scaling or by ECS Cluster Capacity Provider (much better option). It works by automatically scaling the infra for your ECS tasks, its paired with an ASG and adds EC2 instances when you're missing capacity like CPU/RAM to add new tasks.
