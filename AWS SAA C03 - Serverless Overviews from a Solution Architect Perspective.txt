@@ -20,7 +20,7 @@ Unreserved concurrency is now lower than 1000 (e.g 50) though AWS raises quotas 
 
 Lambda SnapStart improves your Lambda functions performance upto 10x at no extra cost for Java, Python & .NET. When enabled, function is invoked from a pre-intialized state. (no function intialization from scratch). When you publish a new version, Lambda intializes your function, takes a snapshot of memory and disk state of the intialized function and snapshot is cached for low-latency access.
 
-Customization at the edge is where many modern apps execute some form of logic at the edge. An edge function is a code that you write and attach to CloudFront distributions, runs close to your users to minimize latency. CloudFront provides two types: CloudFront Functions & Lambda@Edge. No need to manage any servers, deployed globally. Use case is to customize the CDN content and pay only for what you use. Usecases are web security/privacy, Dynamic web app at edge, SEO, Intelligent routing across origins/data centers, Real-time image transformation, A/B testingm User Auth, Tracking and analytics.
+Customization at the edge is where many modern apps execute some form of logic at the edge. An edge function is a code that you write and attach to CloudFront distributions, runs close to your users to minimize latency. CloudFront provides two types: CloudFront Functions & Lambda@Edge. No need to manage any servers, deployed globally. Use case is to customize the CDN content and pay only for what you use. Usecases are web security/privacy, Dynamic web app at edge, SEO, Intelligent routing across origins/data centers, Real-time image transformation, A/B testing User Auth, Tracking and analytics.
 
 CloudFront Functions are lightweight functions written in JS for high scale and lag sensitive CDN customizations. Sub-ms startup times, millions of requests/second. Used to change viewer requests and responses: viewer request is after CloudFront receives a request from the viewer which we can modify or the viewer response is to modify before CloudFront forwards the response back to the viewer. Native feature of CloudFront where entire code is managed directly.
 
@@ -44,3 +44,43 @@ DynamoDB allows you to manage your table's capacity (read/write throughput). Pro
 On-Demand mode allows your reads/writes to auto scale up/down with your workloads. No capacity planning needed, pay for what you use, means more expensive ($$$) great for unpredictable workloads, steep sudden spikes. Used if you have 4-5 transaction a day max because you only pay for what you use.
 
 DynamoDB Accelerator (DAX) is a fully-managed, HA, seamless in-memory cache for DynamoDB. It helps solve read congestion by caching, microseconds latency for cached data and doesn't require application logic modification (compaitible with existing DynamoDB APIs). The cache has a 5 minute TTL. DAX cluster is the middleware b/w application and DynamoDB cluster connected to both. With DynamoDB, DAX cluster is used for individual objects cache and query & scan cache while Amazon Elasticache is used for Storing aggregation result after massive computation (which you may have run on top of DynamoDB). Though DAX Cluster is used with DynamoDB is most usecases.
+
+AWS API Gateway allows us to create REST APIs with HTTP endpoints for clients/applications to interact with our AWS infra. API GAteway allows us to expose any AWS service to the public without exposing it directly or giving away AWS creds. (works as top layer to handle requests) but it provides alot of features. AWS Lambda + API Gateway means no infra to manage, it supports WebSocket Protocol and handles API versioning (v1, v2...) handle different environments (dev,test,prod) Handles security (Authentication and Authorization) Create API keys, handle request throttling, Swagger/Open API import to quickly define APIs, Transform and validate requests and responses, Generate SDK and API specs and cache API responses. These are a few features to keep in mind which aren't provided by a ALB.
+
+Some great integrations include using API Gateway to invoke Lambda function, easy way to expose REST API backed by AWS LAmbda. Another is to expose HTTP endpoints in the backend, example internal HTTP API on premise, ALB etc. This helps by adding rate limiting, caching, user auth, API keys etc. Another is that it allows to expose any AWS API through the API Gateway (e.g start AWS Step Function workflow or post a message to SQS)
+
+Another usecase is to setup API Gateway to take requests/messages from clients and send it to Kinesis data streams to store or transform records and then send it to Data Firehose to process the data and store it in S3 in .json.
+
+API Gateway has three endpoint types, Edge-Optimized (default) for global clients where requests are routed efficiently through the CloudFront Edge locations (improves latency). The API Gateway still lives in only one region. Second is Regional for clients within the same region, could manually combine with CloudFront (more control over the caching strategies and the distribution) and final is Private which can only be accessed from your VPC using an interface VPC endpoint (ENI). Define a resource access policy to allows resources to use/access API Gateway.
+
+API Gateway security includes user auth via IAM Roles (for internal apps running on EC2 or other such service), Cognito (identity for external users e.g webapp/mobile users) or custom Authorizer (auth via own logic using Lambda). Another is custom domain name HTTPS security through integration with AWS Certificate Manager (ACM) If using Edge-optimized endpoint, then the certificate must be in us-east-1. If using regional endpoint, the certificate must be in the API Gateway region, and must setup CNAME or A-alias record in route 53. 
+
+
+AWS Step Functions are use to build or visualize serverless workflow which are difficult to describe and also orchestrate your Lambda functions. Features include sequence, parallel, conditions, timeouts, error handling. Can integrate with EC2, ECS, On-prem servers, API-gateway, SQS queues etc. Possibility of implementing human approval feature and use cases are order fulfillment, data processing, web apps, or any workflow.
+
+Amazon Cognito gives users an identity to interact with our web or mobile application, cognito user pools provide sign in functionality for app users, easy integration with API gateway & Application Load Balancer.
+
+Cognito Identity Pools (prev. Federated Identity) provides temporary AWS creds to users so they can access AWS resources directly, they integrate with Cognito Users pools as an identity provider. Users can be Cognito user pools, 3rd party logins etc. Users then access AWS services directly through API GW, IAM policies are applied to the creds that are defined in cognito, policies are customized for each user_id creds for fine grain control. Default IAM roles for authenticated and guest users which don't have a specific role created for them. In Cognito vs IAM, in exam, keywords for cognito are "hundreds of users", "mobile users", "authenticate with SAML or other such method"
+
+Cognito User Polls (CUP) - User features: it creates a serverless database of user for your web & mobile apps, Simple login: Username (or email) with password combo, Password reset and MFA provided alongside Email & Phone Number Verification. Federated Identities (Login with..) for users from Facebook, Google, SAML, OpenID etc.
+
+CUP integrates with API Gateway and ALB, the workflow starts with the client/application which logs into (authenticate) Cognito User Pools, after authentication, cognito provides a token to app, app then provides token to API Gateway, API GW evaluates the token integrity and the identity of user with Cognito, once confirmed then API GW forwards request to Backend (Lambda) which then provides the content specific for that very user. Same can be done with ALB as well.
+
+Cognito ID pools enable row level security in DynamoDB, meaning user can only read specific rows of the db not all via policy.
+
+
+IMP POINTS:
+
+To authenticate users at edge without having their requests go to origin, use Lambda@Edge
+
+To increase the Read Throughput for DynamoDB for an upcoming Christmas sale and to reduce throttling, use DAX cluster
+
+If an app uses DynamoDB as its datastore and you want to automate sending welcome mail to new users after sign up, enable DynamoDB streams and configure it to invoke Lambda to send emails.
+
+You can scale RCU and WCU independently, one is not dependent on another.
+
+DynamoDB provides TTL for users sessions and logins to expire.
+
+size of an item in DynamoDB table is 400KB
+
+DynamoDB tables can be exported directly to S3 as .json files.
