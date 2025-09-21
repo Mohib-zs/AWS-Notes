@@ -1,0 +1,15 @@
+Amazon Athena is a serverless query service to analyze data stored in Amazon S3. It uses standard SQL language to query the files (built on Presto), supports CSV, JSON, ORC, Avro and Parquet. Pricing is $5.00 per TB of data scanned and is commonly used with Amazon Quicksight for reporting/dashboards. Use cases are Business Intelligence/Analytics/reporting and for analyzing and querying any kind of logs that originate from your AWS services. For EXAM: if you're asked to analyze data in S3 using serverless SQL engine, use Athena.
+
+To improve Athena performance, use columnar data for cost saving, using Parquet or ORC format is recommended for less scan time. use Glue to convert data to Parquet or ORC via ETL for data analytics. Compress data for smaller retrievals, Partition datasets in S3 for easy querying on virtual columns using attributes like year/month/day to retrieve a subset of data that falls in that classification. Use large files (> 128MB) to minimize overhead as many small files can bottleneck performance.
+
+Athena Federated query allows you to run SQL queries across data stored in relational, non-relational object and custom data sources (AWS/On-prem). Uses Data source connectors that run on Lambda to run federated queries (e.g CloudWatch Logs, DynamoDB, RDS..) and store the results back in S3.
+
+Redshift is a PostgreSQL based database, but its not used for OLTP. Instead its OLAP - Online Analytical Processing (analytics and data warehousing) 10x better performance than other data warehouses, scale to PBs of data. Columnar storage of data (data stored in columns not rows) & paralled query engine. Two modes, provisioned cluster or serverless cluster, Has SQL interface for performing queries. Used with BI tools such as Quicksight or Tableau.
+
+Redshift has faster queries/joins/aggregations as compared to Athena thanks to indexes but requires you to provision a whole cluster while Athena is serverless and all your data lives in S3.
+
+Redshift has a leader node for aggregation and compute node for the actual querying. It has multi-az mode for some clusters, snapshots are PITR backups of cluster stored in S3, snapshots are incremental (only what has changed is saved). Automated or manual snapshots, and can configure Redshift to auto copy snapshots of a cluster to another AWS Region for DR.
+
+Use Large ingests to load data to Redshift, an example is Firehose storing data in S3 and then data from S3 is loaded to Redshift cluster via S3 copy (via Internet of through VPC endpoints). You can also use a JDBC driver to send application data running in EC2 to redshit and its much better to write that data in batches rather than in rows one-by-one.
+
+To query data that is already in S3 without loading it, one must have a RedShift cluster available to start the query. It is then submitted to thousands of Redshift spectrum nodes which perform aggregation on data in S3 and then send result back to RedShift compute nodes. In FROM attribute, query starts with S3.xyz if querying directly from S3.
