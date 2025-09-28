@@ -1,0 +1,42 @@
+CloudFormation is an IaC tool which creates infra via templates. Each resources within the stack is tagged with an identifier so you can see how much a stack cost you. Also estimate the cost of the infra using the template. Savings strategy is to automate deletion of templates at 5PM and recreate at 8AM for Dev environment.
+
+CloudFormation Service role is an IAM role that allows CloudFormation to create/update/delete stack resources on your behalf. Give ability to users to create/update/delete the stack resources even if they don't have permissions to work with the resources in the stack. Use cases are if you want to achieve the least privilege principle but you don't want to give the user all the required permissions of the stack. User must have iam:PassRole permission. 
+
+Amazon SES is a managed service to send emails securely, globally and at scale. Allows inbound/outbound emails. Rep dashboards, performance insights, stats on email delivery, bounces, feedback loop etc. Supports DomainKeys Identified Mail (DKIM) and Sender Policy Framework (SPF). Send email via console, API or SMTP. Used for transactional, marketing or bulk emails.
+
+Amazon Pinpoint is a scalable 2-way (outbound/inbound) marketing communications service. Supports email, SMS, push, voice and in-app messaging. Mainly used for SMS. Ability to segment and personalize messages with the right content to customers. Possibility to receive replies. Scales to billions of messages per day. Used to run campaigns by sending marketing, bulk, transactional SMS messages. Against SNS or SES, Pinpoint is simpler as you have to manage each message's audience content and delivery schedule in SNS or SES. In pinpoint you create message templates, delivery schedules and highly-targeted segments and full campaigns.
+
+SSM session manager is a part of Systems manager in AWS which allows us to start a secure shell on EC2 and on-prem servers without SSH access, bastion hosts or SSH keys and no port 22 either. Supports all three OS and send session log data to S3 or CW logs.
+
+Run command - also a feature of Systems Manager, is used to run a command across multiple EC2 instances or execute a script without SSH. Command output can be shown in AWS console, S3 bucket or CW logs. Send notifications to SNS about command status. Integrated with IAM and CloudTrail and can be invoked via EventBridge.
+
+Patch Manager- feature of Systems manager, is used to automate the process of patching managed instances e.g OS updates, applications updates, security updates. Supports EC2 and on-prem servers. Supports all OS, patches on-demand or scheduled during maintenance windows. Scan instances and generate patch compliance report for missing patches.
+
+Maintenance windows in Sys manager is used to schedule windows where patches would be applied.
+
+Sys manager - automation is used to simplify common maintenance and deployment tasks of EC2 like restart instances, create AMI and EBS snapshot. Use Automation Runbook - SSM Documents to define actions preformed on your instances or AWS resources. Works like Ansible. Triggered via console, cli, sdk, as well as EventBridge, Maintenance windows and AWS Config for rules remediations.
+
+AWS Cost Explorer is used to visualize, understand and manage AWS costs and usage over time. Create custom reports that analyze cost and usage data. Analyze data at a high level across all accounts on monthly, hourly or resource level granularity. Forecast upto 12 months based on prev usage.
+
+AWS Cost Anomaly Detection is used to continuously monitor your cost and usage using ML to detect unusual spends. It learns your technique and historic spend patterns and detect one-time cost spike and/or continuous cost increases. Sends anomaly detection report with root-cause analysis.
+
+AWS Outposts are for businesses that keep an on-prem infrastructure along with cloud infrastructure. Outposts are "server racks" that offer the same AWS infrastructure, services, API and tools to build your own app on-prem just as in the cloud. AWS will setup and manage the Outposts racks within your on-prem infra and you can start leveraging AWS services on-prem. You manage the physical security of those Racks. Benefits are low latency as they're on-prem, local data processing, data residency, easier migration on-prem to cloud, fully managed service.
+
+AWS Batch run 100,000s of batch jobs on AWS, runs on EC2 or spot instances, Batch provisions the right amount of compute/memory. Just submit or schedule the jobs and these jobs are defined as docker images and run on ECS.
+
+Amazon AppFlow is a fully managed integration service that enables secure data transfer between SaaS apps and AWS. Sources are Salesforce, SAP, Slack etc. while Destinations are S3, Redshift, and non AWS services such as SnowFlake and Salesforce. Can be done in schedules, event responses or on-demand. Has filtering and validation and data is encrypted over internet. Usecase is to not write complex integration, just use the ready APIs.
+
+Amazon Amplify is like Elastic Beanstalk for web and mobile applications, helps create fully ready apps with frontend and backend with integrations with AWS services like s3, cognito, lambda, lex, DynamoDB and is deployed on amplify console and cloudfront. Has auth, storage, api, ci/cd, pub/subm ai/ml, monitoring all in one place.
+
+Instance scheduler on AWS is a solution via CloudFormation to auto start/stop AWS services and can reduce costs upto 70%. E.g is stopping Ec2 instances outside business hours. Supports Ec2, EC2 ASG and RDS instances. schedules managed in DynamoDB and uses resource tags and Lambda to perform start/stop operations. Cross account and cross region support.
+
+6 Pillar of Well Architected framework are:
+
+Operational Excellence,
+Security,
+Reliability,
+Performance Efficiency
+Cost Optimization
+Sustainability 
+
+Use AWS Well-Architected tool to review your architecture against the 6 pillars.

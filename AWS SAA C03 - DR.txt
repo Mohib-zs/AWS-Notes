@@ -1,0 +1,39 @@
+RPO is the amount of acceptable data loss on basis of time while RTO is the amount of time required to recover. Following are the DR strategies
+
+Backup and Restore, has High RPO (more data loss) and High RTO (more downtime) but cheap and easy to restore.
+
+Pilot Light, A small version of your app is running, meaning critical systems will be in running, only the not so critical things would have to be setup and you're operational. Faster than backup and restore and similar too. e.g is on-prem RDS data being replicated to AWS RDS which is running but EC2 not running and setup with DR plan. Smaller RPO/RTO than backup and restore.
+
+Warm Standby, complete system is replicated but at a smaller scale, meaning the standalone things like ELB is already there and RDS and EC2 with ASG is also there but at minimum capacity, when traffic from Route 53 is shifted than scaling occurs. Even lesser RPO/RTO than Pilot Light.
+
+Multi Site/ Hot Site approach (or active active approach), infra of same type and scale is present in AWS and traffic is also routed to it via Route 53. Very expensive.
+
+Use Database Migration Service DMS to migrate on-prem database data to cloud DB. DMS runs on EC2 which takes data from source and throws to destination. Use AWS Schema Conversion Tool (SCT) to convert your database's Schema from one engine to another. Example OLTP (SQL Server or Oracle) to MySQL, PostgreSQL or Aurora. Or OLAP (Teradata or Oracle) to Amazon Redshift. No need for SCT if migrating to same DB engine e.g PostgreSQL to RDS PostgreSQL. SCT should run on on-prem server as best practice and perform schema conversion, while DMS in EC2 will do the continuous replication via CDC and sent it RDS.
+
+To migrate from RDS MySQL to Aurora MySQL, option 1 is to create DB snapshots from RDS MySQL and restore as MySQL Aurora DB. Or create an Aurora Read Replica from your RDS MYSQL, and when the replication lag is 0, promote it as its own DB cluster (takes time and costs $) External MySQL to Aurora MySQL, use Percona XtraBackup to create a file backup in S3, create Aurora SQL db from S3. Another way is to create an Aurora MySQL DB, use the mysqldump utility to migrate MySQL into Aurora (slower than S3) Use DMS if both databases are up and running. Same case for RDS PostgreSQL to Aurora PostgreSQL, in the external backup, put it in S3 and import it using the aws_s3 Aurora extension.
+
+On-Prem strategies for AWS include ability to download Amazon Linux 2 ami as a vm (.iso), and create a vm of it in VMWare, KVM, Hyper-V etc. VM import/export to migrate existing apps to EC2. Create a DR repo strategy for your on-prem vms. Can export back the vms from ec2 to on-prem. Track utilization via AWS Migration Hub before planning migration. For migration of on-prem server to AWS use AWS Server Migration Service (SMS) to perform incremental replication of on-prem live servers to AWS.
+
+So for AWS to on-prem, download AMI and restore in Hypervisor platform locally
+
+For On-prem to AWS, incremental replication of on-prem live servers to AWS.
+
+For on-prem DB to AWS DB, use DMS with STC (if needed)
+
+AWS Backup is a fully managed service to centrally manage and automate backups across AWS services. No need to create custom scripts and manual processes. Supports alot of services, cross-region backups and cross-account backups. The backup plan will consists of all the services to be backed up (EC2, Storage etc.) and then they will all be auto-backed up to an internal S3 bucket specific to AWS Backup. Use Backup Vault Lock to ensure that backups don't get deleted even by the root user.
+
+Before migrating from on-prem to cloud, first you need to assess, use AWS Application Discovery Service to plan migration by gathering info about on-prem data centers, server utilization and dependency mapping. Can be agentless connector or agent-based discovery (more info like system configs) see results in AWS Migration Hub.
+
+To perform the actual replication of infra, you would use AWS Application Migration Service (MGN) to perform the lift and shift solution, simplifying the migration process. Source can be on-prem, virtual or other cloud based infra to AWS infra as destination. First migrate to small scale staging then do cut over to production with increased sizes.
+
+Transferring large amounts of data (e.g 200TB) from on-prem to cloud with 100Mbps Internet connection.
+
+Doing this using internet (S2S connection): means immediate setup but 200TB will take almost 185d to transfer.
+
+Doing this via Direct Connect (1Gbps): Long one time setup (30+ days) and will take 18.5d additional for the data transfer to happen.
+
+Doing this over Snowball: Will take 2/3 snowballs in parallel and they'll come in 2-3 days, takes about a week for the data transfer, can be combined with DMS so total of about 10-15 days max.
+
+For on-going replication, use S2S or DX with DMS or DataSync.
+
+To migrate on-prem VMWare infra and data to cloud while still using VMware software, they can use VMware Cloud on AWS.
